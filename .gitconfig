@@ -1,0 +1,30 @@
+[alias]
+	st = status
+	ci = commit
+	co = checkout
+	logs = log --stat
+	logl = log --pretty=oneline --abbrev-commit
+	logp = log --abbrev-commit --patch-with-stat
+	format-patch = -M -C
+
+[color]
+	branch = auto
+	diff = auto
+	status = auto
+
+[merge]
+	stat = 1
+	tool = vimdiff
+
+[pack]
+	threads = 0
+
+[sendemail]
+	chainreplyto = false
+	suppressfrom = true
+
+[format]
+	numbered = auto
+
+[push]
+	default = tracking

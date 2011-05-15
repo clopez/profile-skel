@@ -1,0 +1,22 @@
+#    ___ ___                      ___ ___ __ __
+#   |   Y   .-----.--------.-----|   Y   |__|  |_
+#   |.  1   |  _  |        |  -__|.  1  /|  |   _|
+#   |.  _   |_____|__|__|__|_____|.  _  \|__|____|
+#   |:  |   |                    |:  |   \
+#   |::.|:. |  Set-up ~yourself  |::.| .  )
+#   `--- ---'                    `--- ---'
+#
+
+logtstamp off
+multiuser off
+sessionname 'scr'
+startup_message off
+nethack on
+vbell on
+sorendition +b yr
+shelltitle '> |bash'
+hardstatus alwayslastline '%{= bw}%{+b}[%{-}%h%{+b}]%{-} %=%-Lw%{+rb kW}%n  %t%{-}%+Lw %{-}'
+
+# vim:ft=screen
+#
+
