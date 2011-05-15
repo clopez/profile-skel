@@ -1,0 +1,2 @@
+Probably you want to do the following to prevent deleting of bash_history
+chattr +a ~/.bash_history
