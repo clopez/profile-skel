@@ -17,8 +17,17 @@ shopt -s checkwinsize
 
 # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
 # from bash(1) "If HISTFILESIZE is not set, no truncation is performed."
-unset HISTSIZE
 unset HISTFILESIZE
+
+# from bash(1):
+# The value of the HISTSIZE variable is used as the number of commands  to  save in
+# a history  list.  The text of the last HISTSIZE commands (default 500) is saved.
+#
+# from my_experience(™):
+# Not setting the variable HISTSIZE makes it to only read only last 500 values.
+# But setting it to an empty value makes it to read the full history.
+# This behaviour seems not to be documented but works (as far as I tested)
+export HISTSIZE
 export HISTTIMEFORMAT="%F %T "
 
 # make less more friendly for non-text input files, see lesspipe(1)
