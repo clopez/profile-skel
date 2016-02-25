@@ -9,7 +9,6 @@
 
 logtstamp off
 multiuser off
-sessionname 'scr'
 startup_message off
 nethack on
 vbell on
