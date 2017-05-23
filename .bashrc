@@ -128,3 +128,7 @@ if [[ -x /usr/bin/git ]] ; then
     || export PS1="\[\e[1;32m\]\$(git_get_branch_name)\[\e[0;0m\]$PS1"
 fi
 
+if [[ -n "${CROSS_COMPILE}" ]]; then
+    export PS1="\[\e[1;33m\](cross) \[\e[0;0m\]${PS1}"
+fi
+
