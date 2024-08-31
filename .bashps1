@@ -1,0 +1,148 @@
+#! /bin/bash
+
+# Colors for PS1
+txtblk='\[\033[02;30m\]' # Black - Regular
+txtred='\[\033[02;31m\]' # Red
+txtgrn='\[\033[02;32m\]' # Green
+txtylw='\[\033[02;33m\]' # Yellow
+txtblu='\[\033[02;34m\]' # Blue
+txtpur='\[\033[02;35m\]' # Purple
+txtcyn='\[\033[02;36m\]'
+txtwht='\[\033[02;37m\]' # White
+
+bldblk='\[\033[01;30m\]' # Black - Bold
+bldred='\[\033[01;31m\]'
+bldgrn='\[\033[01;32m\]' # Green
+bldylw='\[\033[01;33m\]' # Yellow
+bldblu='\[\033[01;34m\]' # Blue
+bldpur='\[\033[01;35m\]' # Purple
+bldcyn='\[\033[01;36m\]' # Cyan
+bldwht='\[\033[01;37m\]' # White
+
+unkblk='\[\033[4;30m\]' # Black - Underline
+undred='\[\033[4;31m\]' # Red
+undgrn='\[\033[4;32m\]' # Green
+undylw='\[\033[4;33m\]' # Yellow
+undblu='\[\033[4;34m\]' # Blue
+undpur='\[\033[4;35m\]' # Purple
+undcyn='\[\033[4;36m\]' # Cyan
+undwht='\[\033[4;37m\]' # White
+
+bakblk='\[\033[40m\]'   # Black - Background
+bakred='\[\033[41m\]'
+bakgrn='\[\033[42m\]'   # Green
+bakylw='\[\033[43m\]'   # Yellow
+bakblu='\[\033[44m\]'   # Blue
+bakpur='\[\033[45m\]'   # Purple
+bakcyn='\[\033[46m\]'   # Cyan
+bakwht='\[\033[47m\]'   # White
+txtrst='\[\033[00m\]'
+
+
+function git_get_branch_name()
+{
+	if [[ -x /usr/bin/git ]] ; then
+		# Get exit status of previous command
+		local branch=$(git symbolic-ref HEAD 2> /dev/null | sed 's#refs\/heads\/\(.*\)#\1#')
+		if [[ -n "${branch}" ]]; then
+			printf " (${txtgrn}${branch}${txtrst}"
+			# Check for uncommited changes, wait max 0.2
+			timeout 0.2 git diff --quiet --exit-code
+			local retcode=$?
+			if [[ $retcode -eq 0 ]]; then
+				printf ")"
+			elif [[ $retcode -eq 1 ]]; then
+				printf "${bldred}*${txtrst})"
+			else
+				# timeout trigered likely
+				printf "${bldylw}?${txtrst})"
+			fi
+		fi
+	fi
+}
+
+function usercolor() {
+	if [[ ${EUID} == 0 ]]; then
+		printf "${bldred}"
+	else
+		printf "${txtcyn}$(whoami)@"
+	fi
+}
+
+function printcoloredexitstatus()
+{
+    EXIT_STATUS=$1
+    # Bash 4 and up yield 130 for Ctrl+C on blank lines. Older shells do
+    # not have this feature. For the newer shells, we do not show the exit
+    # status for Ctrl+C as it gets annoying to see an exit status indicator
+    # just for hitting Ctrl+C.
+    CTRL_C="130" && [[ "${BASH_VERSINFO[0]}" -lt 4 ]] && CTRL_C="-1"
+    if [[ "${EXIT_STATUS}" -eq "0" || "${EXIT_STATUS}" -eq "${CTRL_C}" ]]; then
+			printf "${bldblu}"
+
+    else
+			printf "${bakred}${bldwht}"
+    fi
+}
+
+function updateps1() {
+
+
+	EXIT_STATUS=$?
+	# Reset PS1
+	PS1=""
+	# If jobs.. show jobs
+	[[ $(jobs|wc -l) -gt 0 ]]   && PS1="[${bldylw}\j${txtrst}] "
+	# Get nice directory
+	IFS='/'; x=( $( echo "${PWD}" | sed "s,^${HOME},~," ) ); unset IFS
+	if [[ "${#x[@]}" -gt 5 ]]; then
+		if echo "${PWD}" | grep -q ^${HOME}; then
+			directory=$(echo "~/.../${x[$((${#x[@]}-1))]}")
+		else
+			directory=$(echo "/${x[1]}/.../${x[$((${#x[@]}-1))]}")
+		fi
+	else
+		directory=$(echo  "${PWD}" | sed "s,^${HOME},~,")
+
+	fi
+
+	if [[ -n "${debian_chroot}" ]]; then
+		host="\h${txtrst}${txtylw}(${debian_chroot})"
+		DHOSTNAME="${HOSTNAME}(${debian_chroot})"
+	elif [[ -n "${UNDER_JHBUILD}" ]]; then
+		host="\h${txtrst}${txtylw}(jhbuild)"
+		DHOSTNAME="${HOSTNAME}(jhbuild)"
+	# WK integrated yocto
+	elif [[ -n "${WEBKIT_CROSS_TARGET}" ]]; then
+		if [[ -n "${BUILDDIR}" ]]; then
+			host="\h${txtrst}${txtylw}(WKBitBakeDevShell:${WEBKIT_CROSS_TARGET})"
+			DHOSTNAME="${HOSTNAME}(WKBitBakeDevShell:${WEBKIT_CROSS_TARGET})"
+		else
+			host="\h${txtrst}${txtylw}(WKCrossDevShell:${WEBKIT_CROSS_TARGET})"
+			DHOSTNAME="${HOSTNAME}(WKCrossDevShell:${WEBKIT_CROSS_TARGET})"
+		fi
+	# Yocto/OE
+	elif [[ -n "${BUILDDIR}" ]]; then
+			if test -f "${BUILDDIR}/conf/local.conf"; then
+				oename="$(cat ${BUILDDIR}/conf/local.conf|grep ^MACHINE|cut -d\" -f2|tail -1)"
+			else
+				oename="$(basename ${BUILDDIR})"
+			fi
+			host="\h${txtrst}${txtylw}(oe:${oename})"
+			DHOSTNAME="${HOSTNAME}(oe:${oename})"
+			unset oename
+	else
+		host="\h"
+		DHOSTNAME="${HOSTNAME}"
+	fi
+
+	PS1="${PS1}$(usercolor)${host}${txtrst}${txtpur}:${txtrst} ${bldblu}${directory}${txtrst}$(git_get_branch_name) $(printcoloredexitstatus $EXIT_STATUS)\\$"
+	unset host
+	# http://jonisalonen.com/2012/your-bash-prompt-needs-this/
+	export PS1="\n\[\033[G\]${PS1}${txtrst} "
+	echo -ne "\033];${DHOSTNAME}: ${directory}\007"
+	unset DHOSTNAME
+	return $EXIT_STATUS
+}
+
+export PROMPT_COMMAND=updateps1

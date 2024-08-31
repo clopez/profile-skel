@@ -62,14 +62,24 @@ if ${use_color} ; then
     else
         PS1='\[\033[02;36m\]\u@\h\[\033[01;34m\] \w \$\[\033[00m\] '
     fi
-
-    alias ls='ls --color=auto'
-    alias dir='dir --color=auto'
-    alias vdir='vdir --color=auto'
-    alias grep='grep --colour=auto'
-    alias fgrep='fgrep --color=auto'
-    alias egrep='egrep --color=auto'
+    # we love colors!
+    alias ls='ls --color=always'
+    alias dir='dir --color=always'
+    alias vdir='vdir --color=always'
+    alias grep='grep --colour=always'
+    alias fgrep='fgrep --color=always'
+    alias egrep='egrep --color=always'
     alias pico='nano -Y sh'
+    alias grey-grep="GREP_COLOR='1;30' stdbuf -oL grep --color=always"
+    alias red-grep="GREP_COLOR='1;31' stdbuf -oL grep --color=always"
+    alias green-grep="GREP_COLOR='1;32' stdbuf -oL grep --color=always"
+    alias yellow-grep="GREP_COLOR='1;33' stdbuf -oL grep --color=always"
+    alias blue-grep="GREP_COLOR='1;34' stdbuf -oL grep --color=always"
+    alias magenta-grep="GREP_COLOR='1;35' stdbuf -oL grep --color=always"
+    alias cyan-grep="GREP_COLOR='1;36' stdbuf -oL grep --color=always"
+    alias white-grep="GREP_COLOR='1;37' stdbuf -oL grep --color=always"
+    # http://unix.stackexchange.com/questions/366/convince-grep-to-output-all-lines-not-just-those-with-matches
+    highlight() { stdbuf -oL grep --color=always -P "${@}|$"; }
     # Set color for files
     if [ -x /usr/bin/dircolors ]; then
         test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
@@ -97,6 +107,23 @@ esac
 alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
+alias lss="ls --sort=size -r1 -sh"
+alias lst="ls --sort=time -r1 -sh"
+alias lcut='cut -c1-$COLUMNS'
+
+# some other useful alias and functions
+alias nocolor="perl -pe 's/\e\[?.*?[\@-~]//g'"
+
+waitpid() {
+	local retcode=1
+	while ps "$1" &>/dev/null; do sleep 1; retcode=0; done
+	return ${retcode}
+}
+git_last_branches() {
+	git reflog | grep -Po "moving\ from\ [^\ ]+" | sed "s/moving\ from\ //g" | awk '!x[$0]++'
+}
+
+
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like
@@ -114,7 +141,6 @@ if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
     . /etc/bash_completion
 fi
 
-
 # git
 git_get_branch_name ()
 {
@@ -123,12 +149,16 @@ git_get_branch_name ()
     [ "$branch" ] && echo "$branch "
 }
 
-if [[ -x /usr/bin/git ]] ; then
-[[ $PS1 = *git_get_branch_name* ]] \
-    || export PS1="\[\e[1;32m\]\$(git_get_branch_name)\[\e[0;0m\]$PS1"
-fi
+# PS1
+if [ -f ~/.bashps1 ]; then
+    . ~/.bashps1
+else
+    if [[ -x /usr/bin/git ]] ; then
+        [[ $PS1 = *git_get_branch_name* ]] \
+            || export PS1="\[\e[1;32m\]\$(git_get_branch_name)\[\e[0;0m\]$PS1"
+    fi
 
-if [[ -n "${CROSS_COMPILE}" ]]; then
-    export PS1="\[\e[1;33m\](cross) \[\e[0;0m\]${PS1}"
+    if [[ -n "${CROSS_COMPILE}" ]]; then
+        export PS1="\[\e[1;33m\](cross) \[\e[0;0m\]${PS1}"
+    fi
 fi
-
